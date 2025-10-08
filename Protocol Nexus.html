@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Wallet Integration</title>
+    
+    <style>
+        /* --- Offline-Proof Styles --- */
+        
+        /* Define Colors for Easy Reference */
+        :root {
+            --color-dark-bg: #111827;      /* gray-900 */
+            --color-card-bg: #1f2937;      /* gray-800 */
+            --color-border: #374151;       /* gray-700 */
+            --color-loader-green: #10B981; /* Emerald-500 */
+            --color-primary-blue: #4F46E5; /* Indigo-600 */
+        }
+
+        /* Base Body and Layout Styles (Replaces Tailwind: bg-gray-900 min-h-screen flex items-center justify-center p-4) */
+        body {
+            background-color: var(--color-dark-bg);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Card Container Styles (Replaces Tailwind: w-full max-w-lg bg-gray-800 p-8 md:p-12 rounded-xl shadow-2xl border border-gray-700) */
+        .card {
+            width: 100%;
+            max-width: 32rem; /* max-w-lg */
+            background-color: var(--color-card-bg);
+            padding: 2rem; /* p-8 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+            border: 1px solid var(--color-border);
+        }
+        @media (min-width: 768px) {
+            .card {
+                padding: 3rem; /* md:p-12 */
+            }
+        }
+
+        /* Title Styles (Replaces Tailwind: text-3xl font-extrabold text-white mb-2 text-center) */
+        .title {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* font-extrabold */
+            color: white;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        /* Subtitle styles */
+        .subtitle {
+            color: #9ca3af; /* text-gray-400 */
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        /* Progress Track (Replaces: w-full bg-gray-700 rounded-full h-3) */
+        .progress-track {
+            width: 100%;
+            background-color: var(--color-border);
+            border-radius: 9999px;
+            height: 0.75rem;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        /* Progress Bar (Replaces: h-full bg-loader-green rounded-full shadow-lg shadow-loader-green/50) */
+        #progress-bar {
+            height: 100%;
+            background-color: var(--color-loader-green);
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
+            /* Smooth transition is crucial for the animation */
+            transition: width 0.1s linear; 
+        }
+
+        /* Percentage Text */
+        .text-green {
+            color: var(--color-loader-green);
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600; /* font-semibold */
+        }
+        
+        /* Status Text */
+        .text-gray {
+            color: #d1d5db; /* text-gray-300 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600; /* font-semibold */
+        }
+
+        /* Notice Box */
+        .notice-box {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: rgba(55, 65, 81, 0.5); /* bg-gray-700/50 */
+            border-radius: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+            color: #9ca3af; /* text-gray-400 */
+            border-left: 4px solid var(--color-primary-blue);
+        }
+        .notice-box .font-bold {
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        /* --- Aesthetic Preloader Dot Animation --- */
+        @keyframes pulse-once {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+        .preloader-dot {
+            height: 0.75rem;
+            width: 0.75rem;
+            background-color: var(--color-loader-green);
+            border-radius: 9999px;
+            animation: pulse-once 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- Loading Card Container -->
+    <div class="card">
+        
+        <h1 class="title">
+            Protocol Nexus
+        </h1>
+        <p class="subtitle">
+            Establishing secure connection and setting up trading parameters.
+        </p>
+
+        <!-- Aesthetic Preloader Dot -->
+        <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+            <div class="preloader-dot"></div>
+        </div>
+
+        <!-- Progress Bar Area -->
+        <div style="margin-bottom: 1rem;">
+            
+            <!-- Progress Bar Visualization -->
+            <div class="progress-track">
+                <div 
+                    id="progress-bar" 
+                    style="width: 0%"
+                ></div>
+            </div>
+
+            <!-- Percentage and Status Display -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <p id="percentage-text" class="text-green">0%</p>
+                <p id="status-text" class="text-gray">Awaiting connection...</p>
+            </div>
+        </div>
+
+        <!-- Warning/Tip Box -->
+        <div class="notice-box">
+            <p class="font-bold">Security Notice:</p>
+            <p>Ensure your wallet is unlocked and approved for dApp connection. This process takes approximately 60 seconds.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM element references
+        const progressBar = document.getElementById('progress-bar');
+        const percentageText = document.getElementById('percentage-text');
+        const statusText = document.getElementById('status-text');
+
+        // Configuration
+        const DURATION_MS = 60000; // 60 seconds
+        let startTime = null;
+
+        // Status messages and their completion milestones
+        const STATUS_MESSAGES = [
+            { threshold: 0, text: "Connecting wallet to bot..." },
+            { threshold: 34, text: "Initializing core algorithms..." },
+            { threshold: 67, text: "Setting up environment and fetching live data..." }
+        ];
+
+        /**
+         * Updates the status text based on the current progress percentage.
+         * @param {number} progress - The current percentage (0-100).
+         */
+        function updateStatus(progress) {
+            let currentStatus = STATUS_MESSAGES[0].text;
+            
+            for (const status of STATUS_MESSAGES) {
+                if (progress >= status.threshold) {
+                    currentStatus = status.text;
+                }
+            }
+
+            if (progress >= 100) {
+                currentStatus = "Initialization Complete! Redirecting...";
+            }
+
+            // Only update the DOM if the text actually changes
+            if (statusText.textContent !== currentStatus) {
+                statusText.textContent = currentStatus;
+            }
+        }
+
+        /**
+         * The main animation loop using requestAnimationFrame for smooth updates.
+         * @param {DOMHighResTimeStamp} timestamp - The current time provided by rAF.
+         */
+        function animate(timestamp) {
+            if (startTime === null) {
+                startTime = timestamp;
+            }
+
+            const elapsed = timestamp - startTime;
+            // Calculate progress, ensuring it doesn't exceed 100%
+            let progress = Math.min(100, (elapsed / DURATION_MS) * 100);
+
+            // Round the progress for display, but keep the calculated value for logic
+            const displayProgress = Math.floor(progress);
+
+            // Update UI elements
+            progressBar.style.width = `${progress.toFixed(2)}%`;
+            percentageText.textContent = `${displayProgress}%`;
+            updateStatus(progress);
+
+            // Continue animation if not complete
+            if (progress < 100) {
+                requestAnimationFrame(animate);
+            } else {
+                // Final state adjustment
+                progressBar.style.width = '100%';
+                percentageText.textContent = '100%';
+            }
+        }
+
+        // Start the animation when the script loads
+        window.onload = () => {
+             requestAnimationFrame(animate);
+        };
+
+    </script>
+</body>
+</html>

